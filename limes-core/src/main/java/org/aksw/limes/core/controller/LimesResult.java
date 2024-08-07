@@ -21,6 +21,7 @@ import org.aksw.limes.core.datastrutures.GoldStandard;
 import org.aksw.limes.core.evaluation.qualititativeMeasures.FMeasure;
 import org.aksw.limes.core.evaluation.qualititativeMeasures.PseudoFMeasure;
 import org.aksw.limes.core.io.cache.ACache;
+import org.aksw.limes.core.io.ls.LinkSpecification;
 import org.aksw.limes.core.io.mapping.AMapping;
 import org.aksw.limes.core.io.mapping.MappingFactory;
 import org.aksw.limes.core.measures.mapper.MappingOperations;
@@ -39,6 +40,7 @@ public class LimesResult {
     private ACache targetCache = null;
     private long runTime = 0;
     private Map<String, String> lsVerbalization = null; //Language->Verbalization Map
+    private LinkSpecification linkSpecification;
 
     /**
      * Constructor
@@ -50,8 +52,9 @@ public class LimesResult {
 
     /**
      * Constructor
+     *
      * @param verificationMapping Mapping where acceptanceThreshold &gt; sim &gt;= verificationThreshold
-     * @param acceptanceMapping Mapping where sim &gt;= acceptanceThreshold
+     * @param acceptanceMapping   Mapping where sim &gt;= acceptanceThreshold
      */
     public LimesResult(AMapping verificationMapping, AMapping acceptanceMapping) {
         super();
@@ -62,24 +65,27 @@ public class LimesResult {
 
     /**
      * Constructor
+     *
      * @param verificationMapping Mapping where acceptanceThreshold &gt; sim &gt;= verificationThreshold
-     * @param acceptanceMapping Mapping where sim &gt;= acceptanceThreshold
-     * @param sourceCache source resources cache
-     * @param targetCache target resources cache
-     * @param runTime run time
-     * @param lsVerbalization A natural language explanation of the metric grouped by language
+     * @param acceptanceMapping   Mapping where sim &gt;= acceptanceThreshold
+     * @param sourceCache         source resources cache
+     * @param targetCache         target resources cache
+     * @param runTime             run time
+     * @param lsVerbalization     A natural language explanation of the metric grouped by language
      */
-    public LimesResult(AMapping verificationMapping, AMapping acceptanceMapping, ACache sourceCache, ACache targetCache, long runTime, Map<String, String> lsVerbalization) {
+    public LimesResult(AMapping verificationMapping, AMapping acceptanceMapping, ACache sourceCache, ACache targetCache, long runTime, Map<String, String> lsVerbalization, LinkSpecification linkSpecification) {
         this(verificationMapping, acceptanceMapping);
         this.sourceCache = sourceCache;
         this.targetCache = targetCache;
         this.runTime = runTime;
         this.lsVerbalization = lsVerbalization;
+        this.linkSpecification = linkSpecification;
     }
 
 
     /**
      * Getter for verification part
+     *
      * @return verification mapping
      */
     public AMapping getVerificationMapping() {
@@ -89,6 +95,7 @@ public class LimesResult {
 
     /**
      * Getter for acceptance part
+     *
      * @return acceptance mapping
      */
     public AMapping getAcceptanceMapping() {
@@ -140,11 +147,12 @@ public class LimesResult {
                         "\n\t\t\t\"recall\" : %s," +
                         "\n\t\t\t\"f-measure\" : %s" +
                         "\n\t\t}" +
-                        "\n\t}",
-                        this.runTime, this.sourceCache.size(), this.targetCache.size(),
+                        "\n\t}," +
+                        "\n\t\"linkSpecification\" : \"%s\"",
+                this.runTime, this.sourceCache.size(), this.targetCache.size(),
                 this.verificationMapping.size(), this.acceptanceMapping.size(),
                 Double.toString(pseudoPrecisionForAcceptance), Double.toString(pseudoRecallForAcceptance), Double.toString(pseudoFMeasureForAcceptance),
-                Double.toString(pseudoPrecisionForAll), Double.toString(pseudoRecallForAll), Double.toString(pseudoFMeasureForAll));
+                Double.toString(pseudoPrecisionForAll), Double.toString(pseudoRecallForAll), Double.toString(pseudoFMeasureForAll), linkSpecification.getFullExpression());
         return formatted + lsVerbalizationString +
                 "\n}";
     }
@@ -166,7 +174,7 @@ public class LimesResult {
 
     public String getStatistics(AMapping reference) {
         String stats = getStatistics();
-        stats = stats.substring(0, stats.length()-2);
+        stats = stats.substring(0, stats.length() - 2);
         Set<String> gsS = reference.getMap().keySet();
         Set<String> gsT = new HashSet<>();
         for (String s : reference.getMap().keySet()) {

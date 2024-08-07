@@ -241,10 +241,11 @@ public class Controller {
                 + " (need verification) = " + results.size() + " (total)");
 
         //LSVerbalization
+        LinkSpecification resultLinkSpec = isAlgorithm ? results.getLinkSpecification() : new LinkSpecification(config.getMetricExpression(), config.getAcceptanceThreshold());
         Map<String, String> lsVerbalizationByLanguage = LSVerbalization.getLSVerbalizationByLanguage(config.getExplainLS(),
-                isAlgorithm ? results.getLinkSpecification() : new LinkSpecification(config.getMetricExpression(), config.getAcceptanceThreshold()));
+                resultLinkSpec);
 
-        return new LimesResult(verificationMapping, acceptanceMapping, sourceCache, targetCache, runTime, lsVerbalizationByLanguage);
+        return new LimesResult(verificationMapping, acceptanceMapping, sourceCache, targetCache, runTime, lsVerbalizationByLanguage, resultLinkSpec);
     }
 
     private static void writeResults(LimesResult mappings, Configuration config) {

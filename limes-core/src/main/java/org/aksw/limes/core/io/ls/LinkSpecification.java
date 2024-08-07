@@ -81,10 +81,8 @@ public class LinkSpecification implements ILinkSpecification {
     /**
      * Creates a spec with a measure read inside
      *
-     * @param measure
-     *         String representation of the spec
-     * @param threshold
-     *         of the spec
+     * @param measure   String representation of the spec
+     * @param threshold of the spec
      */
     public LinkSpecification(String measure, double threshold) {
         setOperator(null);
@@ -104,8 +102,7 @@ public class LinkSpecification implements ILinkSpecification {
     /**
      * Adds a child to the current node of the spec
      *
-     * @param spec
-     *         to be added
+     * @param spec to be added
      */
     public void addChild(LinkSpecification spec) {
         if (getChildren() == null)
@@ -116,8 +113,7 @@ public class LinkSpecification implements ILinkSpecification {
     /**
      * Adds a child to the current node of the spec
      *
-     * @param spec
-     *         to be added
+     * @param spec to be added
      */
     public void addDependency(LinkSpecification spec) {
         if (getDependencies() == null)
@@ -128,8 +124,7 @@ public class LinkSpecification implements ILinkSpecification {
     /**
      * Removes a dependency from the list of dependencies
      *
-     * @param spec
-     *         Input spec
+     * @param spec Input spec
      */
     public void removeDependency(LinkSpecification spec) {
         if (getDependencies().contains(spec)) {
@@ -195,10 +190,8 @@ public class LinkSpecification implements ILinkSpecification {
      * the filters by checking (if threshold_left and threshold_right grater
      * than or equal to theta, then theta = 0)
      *
-     * @param spec
-     *         expression to read
-     * @param theta
-     *         Global threshold
+     * @param spec  expression to read
+     * @param theta Global threshold
      */
     public void readSpec(String spec, double theta) {
         spec = spec.trim();
@@ -595,8 +588,7 @@ public class LinkSpecification implements ILinkSpecification {
     }
 
     /**
-     * @param atomicMeasure
-     *         the atomicMeasure to set
+     * @param atomicMeasure the atomicMeasure to set
      */
     public void setAtomicMeasure(String atomicMeasure) {
         this.atomicMeasure = atomicMeasure;
