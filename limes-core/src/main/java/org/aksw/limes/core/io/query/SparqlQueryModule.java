@@ -19,8 +19,10 @@ package org.aksw.limes.core.io.query;
 
 import org.aksw.limes.core.io.cache.ACache;
 import org.aksw.limes.core.io.config.KBInfo;
+import org.apache.http.HttpException;
 import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.sparql.engine.http.QueryExceptionHTTP;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,9 +43,8 @@ public class SparqlQueryModule implements IQueryModule {
     /**
      * Reads from a SPARQL endpoint and writes the results in a cache
      *
-     * @param cache
-     *         The cache in which the content on the SPARQL endpoint is to be
-     *         written
+     * @param cache The cache in which the content on the SPARQL endpoint is to be
+     *              written
      */
     public void fillCache(ACache cache) {
         fillCache(cache, true);
@@ -52,12 +53,10 @@ public class SparqlQueryModule implements IQueryModule {
     /**
      * Reads from a SPARQL endpoint or a file and writes the results in a cache
      *
-     * @param cache
-     *         The cache in which the content on the SPARQL endpoint is to be
-     *         written
-     * @param isSparql
-     *         True if the endpoint is a remote SPARQL endpoint, else assume
-     *         that is is a Jena model
+     * @param cache    The cache in which the content on the SPARQL endpoint is to be
+     *                 written
+     * @param isSparql True if the endpoint is a remote SPARQL endpoint, else assume
+     *                 that is is a Jena model
      */
     public void fillCache(ACache cache, boolean isSparql) {
         long startTime = System.currentTimeMillis();
@@ -75,7 +74,7 @@ public class SparqlQueryModule implements IQueryModule {
         String basicQuery = query;
         do {
             int nextOffset = offset + kb.getPageSize();
-            if(kb.getMaxOffset() > 0) {
+            if (kb.getMaxOffset() > 0) {
                 nextOffset = Math.min(kb.getMaxOffset(), nextOffset);
             }
 
@@ -83,13 +82,13 @@ public class SparqlQueryModule implements IQueryModule {
 
             if (kb.getPageSize() > 0) {
                 int limit = kb.getPageSize();
-                if(kb.getMaxOffset() > 0) {
+                if (kb.getMaxOffset() > 0) {
                     limit = nextOffset - offset;
                 }
                 query = basicQuery + " LIMIT " + limit + " OFFSET " + offset;
             } else {
                 query = basicQuery;
-                if(kb.getMaxOffset() > 0) {
+                if (kb.getMaxOffset() > 0) {
                     query = query + " LIMIT " + kb.getMaxOffset();
                 }
             }
@@ -114,7 +113,26 @@ public class SparqlQueryModule implements IQueryModule {
                     qexec = QueryExecutionFactory.sparqlService(kb.getEndpoint(), sparqlQuery);
                 }
             }
-            ResultSet results = qexec.execSelect();
+
+            ResultSet results = null;
+            long retryAfter = 120000;
+            while (results == null) {
+                try {
+                    results = qexec.execSelect();
+                } catch (QueryExceptionHTTP httpException) {
+                    if (httpException.getStatusCode() == 429 || httpException.getStatusCode() == 500) {
+                        logger.error("Received HTTP " + httpException.getStatusCode() + " - Waiting " + retryAfter / 1000 + " seconds before retrying");
+                        try {
+                            Thread.sleep(retryAfter);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                        retryAfter *= 2;
+                    } else {
+                        throw httpException;
+                    }
+                }
+            }
 
             // write
             String uri, value;
@@ -138,7 +156,7 @@ public class SparqlQueryModule implements IQueryModule {
                             }
                             i++;
                         }
-                        if(kb.getOptionalProperties() != null){
+                        if (kb.getOptionalProperties() != null) {
                             for (String propertyLabel : kb.getOptionalProperties()) {
                                 if (soln.contains("v" + i)) {
                                     value = soln.get("v" + i).toString();
